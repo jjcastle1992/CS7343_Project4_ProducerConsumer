@@ -5,13 +5,11 @@ Purpose: Implementaation of the Producer-Consumer Problem (Project 4)
 **********************/
 #include "main.h"
 
-Factory::Factory() {
+Factory::Factory() : full(0), empty(bufferSize) {
     const int bufferSize = 5;
     int itemsProduced = 0;
     int itemsConsumed = 0;
     mutex bufferLock; // to ensure mutual exclusion during buffer access by prod or consumer
-    counting_semaphore<bufferSize> full(0); // count number of full spaces
-    counting_semaphore<bufferSize> empty(bufferSize);  // count number of empty spaces in buffer
     int boundedBuffer[bufferSize];
 }
 
