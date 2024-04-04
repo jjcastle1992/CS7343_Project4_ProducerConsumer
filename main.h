@@ -23,6 +23,7 @@ public:
     Factory();
 
     // Getters/Setters
+    void setSleepTime(int);  // set the number of seconds the program should sleep before it terminates
 
     // Make Producers/Consumers
     void makeProducer();
@@ -42,6 +43,7 @@ public:
 private:
     int itemsProduced;
     int itemsConsumed;
+    int timeToSleep;
     static const int bufferSize = 5;
     mutex bufferLock; // to ensure mutual exclusion during buffer access by prod or consumer
     counting_semaphore<bufferSize> full; // count number of full spaces
