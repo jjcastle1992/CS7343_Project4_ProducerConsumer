@@ -42,11 +42,11 @@ public:
 private:
     int itemsProduced;
     int itemsConsumed;
-    const int bufferSize = 5;
+    static const int bufferSize = 5;
     mutex bufferLock; // to ensure mutual exclusion during buffer access by prod or consumer
-    counting_semaphore<5> full(); // count number of full spaces
-    counting_semaphore<5> empty();  // count number of empty spaces in buffer
-    int boundedBuffer[5]{};
+    counting_semaphore<bufferSize> full; // count number of full spaces
+    counting_semaphore<bufferSize> empty;  // count number of empty spaces in buffer
+    int boundedBuffer[bufferSize];
 };
 
 // Critical section is interacting with the buffer
