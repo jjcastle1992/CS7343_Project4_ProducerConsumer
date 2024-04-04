@@ -13,6 +13,10 @@ Factory::Factory() : full(0), empty(bufferSize) {
     int boundedBuffer[bufferSize];
 }
 
+void Factory::setSleepTime(int seconds) {
+    this->timeToSleep = seconds;
+}
+
 void Factory::makeProducer() {
     ;
 }
@@ -69,8 +73,10 @@ int randomRangeGen(int endRange, int startRange = 0, unsigned int seed = 42) {
 }
 
 int main() {
-
+    int seconds = 0;
     // Get inputs RE:
+    cout << "Please Enter how long to sleep (in seconds): ";
+    cin >> seconds;
         // 1. time to sleep (seconds) before terminating
         // 2. Number of producer threads
         // 3. Number of consumer threads
@@ -81,13 +87,12 @@ int main() {
     // Initialize Buffer
     ourFactory.initializeBuffer();
 
-    // Check Semaphores ready
-
     // Create producers
 
     // Create Consumers
 
     // Sleep
+    this_thread::sleep_for(chrono::seconds(seconds));
 
     // Exit
     cout << "Done" << endl;
