@@ -14,12 +14,12 @@ Factory::Factory() : full(0), empty(bufferSize) {
     this-> bufferIndex = 0;
 }
 
-void Factory::setSleepTime(int seconds) {
+void Factory::setSleepTime(unsigned int seconds) {
     this->timeToSleep = seconds;
 }
 
 
-void Factory::makeProducer(int numProducers) {
+void Factory::makeProducer(unsigned int numProducers) {
     for(int i = 0; i < numProducers; i++){
         unique_ptr<thread> producer (new thread([this]() {
             while(true){
@@ -34,17 +34,18 @@ void Factory::makeProducer(int numProducers) {
                 int number = this->insert_item();
                 message += to_string(number);
                 atomPrint(&message);
+                int sleepTime = randomRangeGen(3, 1, 42);
 
                 bufferLock.unlock();
                 full.release();
-                this_thread::sleep_for(chrono::seconds(1));
+                this_thread::sleep_for(chrono::seconds(sleepTime));
             }
         }));
         producer->detach();
     }
 }
 
-void Factory::makeConsumer(int numConsumers) {
+void Factory::makeConsumer(unsigned int numConsumers) {
     for(int i = 0; i < numConsumers; i++){
         unique_ptr<thread> consumer (new thread([this]() {
             while(true){
@@ -58,10 +59,11 @@ void Factory::makeConsumer(int numConsumers) {
                 int payload = this->remove_item();
                 message += to_string(payload) + "\n";
                 atomPrint(&message);
+                int sleepTime = randomRangeGen(3, 1, 42);
 
                 bufferLock.unlock();
                 empty.release();
-                this_thread::sleep_for(chrono::seconds(1));
+                this_thread::sleep_for(chrono::seconds(sleepTime));
             }
         }));
         consumer->detach();
@@ -95,7 +97,8 @@ void Factory::initializeBuffer() {
 }
 
 void Factory::displayBuffer() {
-    string message = "\n Final Buffer Layout: [ ";
+    bufferLock.lock();  // to ensure this is the last thing
+    string message = "\nFinal Buffer Layout: [ ";
     for(int i = 0; i < (sizeof (this->boundedBuffer) / sizeof (int)); i++){
         message += to_string(this->boundedBuffer[i]) + ", ";
     }
@@ -130,13 +133,21 @@ void atomPrint(std::string *message) {
 }
 
 int main() {
-    int seconds = 0;
+    unsigned int seconds = 0;
+    unsigned int numProducers = 0;
+    unsigned int numConsumers = 0;
     // Get inputs RE:
-    cout << "Please Enter how long to sleep (in seconds): ";
+    // 1. time to sleep (seconds) before terminating
+    cout << "Please Enter how long to sleep before terminating (in seconds): ";
     cin >> seconds;
-        // 1. time to sleep (seconds) before terminating
-        // 2. Number of producer threads
-        // 3. Number of consumer threads
+
+    // 2. Number of producer threads
+    cout << "\nPlease Enter how many producer threads to create: ";
+    cin >> numProducers;
+
+    // 3. Number of consumer threads
+    cout << "\nPlease Enter how many consumer threads to create: ";
+    cin >> numConsumers;
 
     // Build factory
     Factory ourFactory;
@@ -146,10 +157,10 @@ int main() {
     ourFactory.initializeBuffer();
 
     // Create producers
-    ourFactory.makeProducer(2);
+    ourFactory.makeProducer(numProducers);
 
     // Create Consumers
-    ourFactory.makeConsumer(1);
+    ourFactory.makeConsumer(numConsumers);
 
     // Sleep
     this_thread::sleep_for(chrono::seconds(seconds));
