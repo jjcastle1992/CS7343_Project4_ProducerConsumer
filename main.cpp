@@ -29,11 +29,14 @@ void Factory::makeProducer(int numProducers) {
                 bufferLock.lock();
 
                 // Critical Section
-                string message = "Inserting item";
+                string message = "Inserting item [" + to_string(this->bufferIndex) + "]: ";
+
+                int number = this->insert_item();
+                message += to_string(number);
                 atomPrint(&message);
-                this->insert_item();
 
                 bufferLock.unlock();
+                full.release();
                 this_thread::sleep_for(chrono::seconds(1));
             }
         }));
@@ -42,19 +45,46 @@ void Factory::makeProducer(int numProducers) {
 }
 
 void Factory::makeConsumer(int numConsumers) {
-    ;
+    for(int i = 0; i < numConsumers; i++){
+        unique_ptr<thread> consumer (new thread([this]() {
+            while(true){
+                // Do all the things
+                // Check for buffer lock
+                full.acquire();
+                bufferLock.lock();
+
+                // Critical Section
+                string message = "Grabbing item from queue [" + to_string(this->bufferIndex - 1) + "]: ";
+                int payload = this->remove_item();
+                message += to_string(payload) + "\n";
+                atomPrint(&message);
+
+                bufferLock.unlock();
+                empty.release();
+                this_thread::sleep_for(chrono::seconds(1));
+            }
+        }));
+        consumer->detach();
+    }
 }
 
-void Factory::insert_item() {
+int Factory::insert_item() {
     // Inserts a random number in the buffer (0 - RAND_MAX)
     int number = randomRangeGen(RAND_MAX, 0, 42);
     int index = this->bufferIndex;
     this->boundedBuffer[index] = number;
     this->bufferIndex++;
+
+    return number;
 }
 
-void Factory::remove_item() {
-    ;
+int Factory::remove_item() {
+    this->bufferIndex--;
+    int index = this->bufferIndex;
+    int payload = this->boundedBuffer[index];
+    this->boundedBuffer[index] = -1;
+
+    return payload;
 }
 
 
@@ -116,9 +146,10 @@ int main() {
     ourFactory.initializeBuffer();
 
     // Create producers
-    ourFactory.makeProducer(1);
+    ourFactory.makeProducer(2);
 
     // Create Consumers
+    ourFactory.makeConsumer(1);
 
     // Sleep
     this_thread::sleep_for(chrono::seconds(seconds));
