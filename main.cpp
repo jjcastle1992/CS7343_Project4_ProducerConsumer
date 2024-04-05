@@ -6,41 +6,57 @@ Purpose: Implementaation of the Producer-Consumer Problem (Project 4)
 #include "main.h"
 
 Factory::Factory() : full(0), empty(bufferSize) {
-    const int bufferSize = 5;
-    int itemsProduced = 0;
-    int itemsConsumed = 0;
-    mutex bufferLock; // to ensure mutual exclusion during buffer access by prod or consumer
-    int boundedBuffer[bufferSize];
+    this-> itemsProduced = 0;
+    this-> itemsConsumed = 0;
+    this-> bufferLock; // to ensure mutual exclusion during buffer access by prod or consumer
+    this-> boundedBuffer[bufferSize];
+    this-> timeToSleep = 0;
+    this-> bufferIndex = 0;
 }
 
 void Factory::setSleepTime(int seconds) {
     this->timeToSleep = seconds;
 }
 
-void Factory::makeProducer() {
+
+void Factory::makeProducer(int numProducers) {
+    for(int i = 0; i < numProducers; i++){
+        unique_ptr<thread> producer (new thread([this]() {
+            while(true){
+                // Do all the things
+                // Check for buffer lock
+                empty.acquire();
+                bufferLock.lock();
+
+                // Critical Section
+                string message = "Inserting item";
+                atomPrint(&message);
+                this->insert_item();
+
+                bufferLock.unlock();
+                this_thread::sleep_for(chrono::seconds(1));
+            }
+        }));
+        producer->detach();
+    }
+}
+
+void Factory::makeConsumer(int numConsumers) {
     ;
 }
 
-void Factory::makeConsumer() {
-    ;
-}
-
-bool Factory::bufferAvailable() {
-    ;
-}
-
-bool Factory::insert_item() {
+void Factory::insert_item() {
     // Inserts a random number in the buffer (0 - RAND_MAX)
+    int number = randomRangeGen(RAND_MAX, 0, 42);
+    int index = this->bufferIndex;
+    this->boundedBuffer[index] = number;
+    this->bufferIndex++;
+}
+
+void Factory::remove_item() {
     ;
 }
 
-bool Factory::remove_item() {
-    ;
-}
-
-void Factory::initializeLocks() {
-    ;
-}
 
 void Factory::initializeBuffer() {
     for(int & i : this->boundedBuffer) {
@@ -49,10 +65,15 @@ void Factory::initializeBuffer() {
 }
 
 void Factory::displayBuffer() {
-    ;
+    string message = "\n Final Buffer Layout: [ ";
+    for(int i = 0; i < (sizeof (this->boundedBuffer) / sizeof (int)); i++){
+        message += to_string(this->boundedBuffer[i]) + ", ";
+    }
+    message += "]";
+    atomPrint(&message);
 }
 
-int randomRangeGen(int endRange, int startRange = 0, unsigned int seed = 42) {
+int Factory::randomRangeGen(int endRange, int startRange, unsigned int seed) {
     // General implementation borrowed from:
     // https://www.digitalocean.com/community/tutorials/random-number-generator-c-plus-plus
     int random;
@@ -72,6 +93,12 @@ int randomRangeGen(int endRange, int startRange = 0, unsigned int seed = 42) {
     return random;
 }
 
+void atomPrint(std::string *message) {
+    // Modified to atomically print
+    lock_guard<mutex> lock(outputMutex); // Lock the mutex
+    cout << *message << endl; // Print the message
+}
+
 int main() {
     int seconds = 0;
     // Get inputs RE:
@@ -83,11 +110,13 @@ int main() {
 
     // Build factory
     Factory ourFactory;
+    ourFactory.setSleepTime(seconds);
 
     // Initialize Buffer
     ourFactory.initializeBuffer();
 
     // Create producers
+    ourFactory.makeProducer(1);
 
     // Create Consumers
 
@@ -95,7 +124,9 @@ int main() {
     this_thread::sleep_for(chrono::seconds(seconds));
 
     // Exit
-    cout << "Done" << endl;
+    ourFactory.displayBuffer();
+    string message = "\nDone";
+    atomPrint(&message);
 
     return 0;
 }
