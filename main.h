@@ -23,11 +23,11 @@ public:
     Factory();
 
     // Getters/Setters
-    void setSleepTime(int);  // set the number of seconds the program should sleep before it terminates
+    void setSleepTime(unsigned int);  // set the number of seconds the program should sleep before it terminates
 
     // Make Producers/Consumers
-    void makeProducer(int);
-    void makeConsumer(int);
+    void makeProducer(unsigned int);
+    void makeConsumer(unsigned int);
 
     // Interface with production line
     int insert_item();  // Inserts a random number in the buffer (0 - RAND_MAX)
