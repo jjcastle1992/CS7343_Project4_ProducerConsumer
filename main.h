@@ -30,8 +30,8 @@ public:
     void makeConsumer(int);
 
     // Interface with production line
-    void insert_item();  // Inserts a random number in the buffer (0 - RAND_MAX)
-    void remove_item();
+    int insert_item();  // Inserts a random number in the buffer (0 - RAND_MAX)
+    int remove_item();  // takes the last item off the buffer
 
     // UtilityMethods
     void initializeBuffer(); // Set Buffer values to all -1; (Empty)
